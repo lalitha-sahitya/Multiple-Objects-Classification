@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection</title>
+    <style>
+        body {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+h2 {
+    color: #1d3558;
+}
+#nav{
+    padding-top: 25px;
+    padding-bottom: 50px;
+}
+
+.upload-box {
+    border: 2px dashed #007bff;
+    padding: 20px;
+    display: inline-block;
+    cursor: pointer;
+    background: #fff;
+    border-radius: 10px;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.upload-box:hover {
+    background: #eaf2ff;
+    border-color: #0056b3;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+canvas {
+    border: 2px solid #007bff;
+    margin-top: 10px;
+    max-width: 100%;
+    background: white;
+    border-radius: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn-container {
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-2px);
+}
+
+#result {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #333;
+    text-align: center;
+    display: inline-block;
+    background: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+}
+
+    </style>
+</head>
+<body>
+    <div id="nav">
+    <h2>Multiple Objects Detection</h2>
+</div>
+    <label class="upload-box">
+        Click to Upload Image
+        <input type="file" id="imageUpload" accept="image/*">
+    </label>
+
+    <br><br>
+    <canvas id="canvas"></canvas>
+
+    <div class="btn-container">
+        <button class="btn" id="detectBtn">Detect</button>
+    </div>
+
+    <div id="result"></div>
+    
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const detectBtn = document.getElementById('detectBtn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const resultDiv = document.getElementById('result');
+        let uploadedFile = null;
+
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                uploadedFile = file;
+                const img = new Image();
+                img.onload = () => {
+                    const maxWidth = 400;
+                    const scaleFactor = maxWidth / img.width;
+                    const newWidth = Math.min(img.width, maxWidth);
+                    const newHeight = img.height * scaleFactor;
+
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+                    ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                };
+                img.src = URL.createObjectURL(file);
+            }
+        });
+
+        detectBtn.addEventListener('click', async () => {
+            if (!uploadedFile) {
+                resultDiv.innerText = "Please upload an image first.";
+                return;
+            }
+
+            resultDiv.innerHTML = "Processing image...";
+
+            const formData = new FormData();
+            formData.append('image', uploadedFile);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/detections', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    resultDiv.innerHTML = "<strong>Detections:</strong><ul>";
+                    data.detections.forEach(det => {
+                        resultDiv.innerHTML += `<li>${det.object} - ${(det.confidence * 100).toFixed(2)}%</li>`;
+                    });
+                    resultDiv.innerHTML += "</ul>";
+                } else {
+                    resultDiv.innerText = "Error processing image.";
+                }
+            } catch (error) {
+                resultDiv.innerText = "Failed to connect to the server.";
+            }
+        });
+    </script>
+
+</body>
+</html>
