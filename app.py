@@ -24,7 +24,7 @@ def detect_objects(filepath):
     predictions = model.predict(img_array)
     results = imagenet_utils.decode_predictions(predictions)
 
-    detections = [{"object": res[1], "confidence": float(res[2])} for res in results[0]]
+    detections = [{"object": res[1]} for res in results[0]]
     
     return detections
 

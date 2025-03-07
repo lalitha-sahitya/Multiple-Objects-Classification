@@ -155,7 +155,7 @@ canvas {
                 if (data.status === "success") {
                     resultDiv.innerHTML = "<strong>Detections:</strong><ul>";
                     data.detections.forEach(det => {
-                        resultDiv.innerHTML += `<li>${det.object} - ${(det.confidence * 100).toFixed(2)}%</li>`;
+                        resultDiv.innerHTML += `<span style="display: block;">${det.object}</span>`;
                     });
                     resultDiv.innerHTML += "</ul>";
                 } else {
